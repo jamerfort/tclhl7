@@ -1,3 +1,4 @@
+# This file contains code for spliting a message into a list-of-lists-of-lists.
 namespace eval Message {
 	################################################################################
 	# Public methods

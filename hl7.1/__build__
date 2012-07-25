@@ -1,2 +1,0 @@
-%{output hl7.tcl}
-%{include msg.tcl}
