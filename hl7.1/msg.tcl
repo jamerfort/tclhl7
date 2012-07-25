@@ -13,7 +13,13 @@ namespace eval Message {
 			# split the message into segments
 			set segments [split_segments $msgdata $separators]
 
-			return [list $segments $separators]
+			return [list $segments $separators "PARSED_MESSAGE"]
+		}
+
+		proc has_been_parsed {msg} {
+			set parsed_message [lindex $msg 2]
+
+			return [expr {$parsed_message == "PARSED_MESSAGE"}]
 		}
 
 	################################################################################
@@ -103,6 +109,6 @@ namespace eval Message {
 
 				array set seps $separators
 
-				return [split $component $seps(COMPONENT)]
+				return [split $component $seps(SUBCOMPONENT)]
 			}
 }

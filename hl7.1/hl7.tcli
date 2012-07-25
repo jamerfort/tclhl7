@@ -1,3 +1,15 @@
 namespace eval HL7 {
 	%{include msg.tcl}
+	
+	%{include query.tcl}
+}
+
+proc hl7 {cmd args} {
+	switch -exact -- $cmd {
+		parse { return [eval {HL7::Message::parse} $args] }
+		query { return [eval {HL7::Query::query} $args] }
+		default {
+			error "Unknown command: $cmd"
+		}
+	}
 }

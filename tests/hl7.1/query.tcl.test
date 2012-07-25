@@ -1,0 +1,77 @@
+#!/usr/bin/env tclsh
+
+package require tcltest
+
+source tests/customMatchers.tcl
+source hl7.1/hl7.tcl
+
+namespace eval HL7 {
+	proc testquery {name description message query results} {
+		tcltest::test $name $description -body {
+			set msg [Message::parse [join $message \r]]
+			set rslts [Query::query $msg $query]
+			return $rslts
+		} -result $results
+
+		puts "\t$description"
+		puts "\t$query => $rslts"
+	}
+
+	tcltest::test query-1.0 {Test that it errors on an unparsed message.} -body {
+		set msgdata [join {
+				{MSH|^~\&|}
+				{PID|||1234567}
+		} \r]
+		return [Query::query $msgdata "PID.3.0.0.0"]
+	} -returnCodes error -result "The message must be parsed."
+
+
+
+
+	tcltest::test query-1.0 {Test that it errors on a query with too many parts} -body {
+		set msg [Message::parse [join {
+				{MSH|^~\&|}
+				{PID|||1234567}
+		} \r]]
+		return [Query::query $msg "PID.3.0.0.0.0"]
+	} -returnCodes error -result "Too many query parts. Between 1 and 5 parts allowed."
+
+
+
+
+	tcltest::test query-1.0 {Test that it errors on a query with too few parts} -body {
+		set msg [Message::parse [join {
+				{MSH|^~\&|}
+				{PID|||1234567}
+		} \r]]
+		return [Query::query $msg ""]
+	} -returnCodes error -result "Not enough query parts. Between 1 and 5 parts allowed."
+
+
+	set testmsg {
+		{MSH|^~\&|}
+		{PID|||1234567~abcdefg}
+		{TST||This&is^a subcomponent~Not another&test|A^B^C^D~E^F^G}
+		{PID|||1234567}
+	}
+
+	testquery query-1.0 {Test that queries on segment type} $testmsg "PID" {1 3}
+	testquery query-1.0 {Test that queries on segment index} $testmsg "2" {2}
+	testquery query-1.0 {Test that queries on both segment type and index} $testmsg "MSH,2" {0 2}
+
+	testquery query-1.0 {Test field queries} $testmsg "PID.3" {1.3 3.3}
+	testquery query-1.0 {Test field queries outside of range} $testmsg "PID.7" {1.7 3.7}
+	testquery query-1.0 {Test field queries with *} $testmsg "PID.*" {1.0 1.1 1.2 1.3 3.0 3.1 3.2 3.3}
+	testquery query-1.0 {Test field queries with ranges} $testmsg "PID.2-3" {1.2 1.3 3.2 3.3}
+	testquery query-1.0 {Test field queries with ranges (out of range)} $testmsg "1.2-7" {1.2 1.3 1.4 1.5 1.6 1.7}
+
+	testquery query-1.0 {Test repetition queries} $testmsg "PID.3.0" {1.3.0 3.3.0}
+	testquery query-1.0 {Test repetition queries with *} $testmsg "PID.3.*" {1.3.0 1.3.1 3.3.0}
+	testquery query-1.0 {Test repetition queries outside range} $testmsg "PID.3.4" {}
+
+	testquery query-1.0 {Test component queries} $testmsg "TST.3.0.1" {2.3.0.1}
+	testquery query-1.0 {Test component queries with *} $testmsg "TST.3.0.*" {2.3.0.0 2.3.0.1 2.3.0.2 2.3.0.3}
+
+	testquery query-1.0 {Test subcomponent queries} $testmsg "2.2.0.0.1" {2.2.0.0.1}
+	testquery query-1.0 {Test subcomponent queries with *} $testmsg "TST.2.0.0.*" {2.2.0.0.0 2.2.0.0.1}
+}
