@@ -1,0 +1,24 @@
+#!/usr/bin/env tclsh
+
+package require tcltest
+
+source tests/customMatchers.tcl
+source hl7.1/example_msg.tcl
+source hl7.1/msg.tcl
+
+tcltest::test get_separators-1.0 {Test pulling separators from a message} -body {
+	return [Message::get_separators $example_msg \n]
+} -result {
+	SEGMENT \n
+	FIELD |
+	REPETITION ~
+	COMPONENT ^
+	SUBCOMPONENT &
+	ESCAPE \\
+} -match array
+
+
+tcltest::test parse-1.0 {Test parsing a message} -body {
+	# get OBX.3.0.1.0 -> 3.3.0.1.0
+	return [lindex [Message::parse $example_msg \n] 0 3 3 0 1 0]
+} -result "GLUCOSE"
