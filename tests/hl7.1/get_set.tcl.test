@@ -1,0 +1,120 @@
+#!/usr/bin/env tclsh
+
+package require tcltest
+
+source tests/customMatchers.tcl
+source hl7.1/hl7.tcl
+
+namespace eval HL7 {
+	proc testget {name description message query results} {
+		tcltest::test $name $description -body {
+			set msg [Message::parse [join $message \r]]
+			set rslts [GetSet::get $msg $query]
+			return $rslts
+		} -result $results
+
+		if { [info exists ::env(SHOW_QUERY_RESULTS)] && $::env(SHOW_QUERY_RESULTS) } {
+			puts "\t$description"
+			puts "\t$query => $rslts"
+		}
+	}
+
+	proc testset {name description message query value} {
+		
+		tcltest::test $name $description -body {
+			set msg [Message::parse [join $message \r]]
+			
+			set before [GetSet::get $msg $query]
+			set after [GetSet::get [GetSet::_set $msg $query $value] $query]
+
+			set before_count [llength $before]
+			set after_count [llength $after]
+
+			if { $before_count != $after_count } {
+				return "$before_count != $after_count"
+			}
+
+			for {set i 0} {$i < $after_count} {incr i} {
+				set before_address [lindex $before $i 1]
+
+				set after_value [lindex $after $i 0]
+				set after_address [lindex $after $i 1]
+
+				if { $before_address != $after_address } {
+					return "$before_address != $after_address"
+				}
+
+				if { $after_value != $value } {
+					return "$after_value != $value"
+				}
+			}
+
+			return 1
+		} -result 1
+
+		if { [info exists ::env(SHOW_QUERY_RESULTS)] && $::env(SHOW_QUERY_RESULTS) } {
+			puts "\t$description"
+			puts "\t$query => $value"
+			
+			set msg [Message::parse [join $message \n]]
+			set msg [hl7 set $msg $query $value]
+			puts "\t\t[string map {\n \n\t\t} [hl7 data [hl7 set $msg $query $value]]]"
+		}
+	}
+
+	set testmsg {
+		{MSH|^~\&|}
+		{PID|||1234567~abcdefg}
+		{TST||This&is^a subcomponent~Not another&test|A^B^C^D~E^F^G}
+		{PID|||1234567}
+	}
+
+	testget get-1.0 {Test segment queries on segment type} $testmsg "PID" {{{PID {} {} {1234567 abcdefg}} 1} {{PID {} {} 1234567} 3}}
+	testget get-1.0 {Test segment queries on segment index} $testmsg "2" {{{TST {} {{{This is} {{a subcomponent}}} {{{Not another} test}}} {{A B C D} {E F G}}} 2}}
+	testget get-1.0 {Test segment queries on both segment type and index} $testmsg "MSH,2" {{{MSH | {^~\&} {}} 0} {{TST {} {{{This is} {{a subcomponent}}} {{{Not another} test}}} {{A B C D} {E F G}}} 2}}
+
+	testget get-1.0 {Test field queries} $testmsg "PID.3" {{{1234567 abcdefg} 1.3} {1234567 3.3}}
+	testget get-1.0 {Test field queries outside of range} $testmsg "PID.7" {{{} 1.7} {{} 3.7}}
+	testget get-1.0 {Test field queries with *} $testmsg "PID.*" {{PID 1.0} {{} 1.1} {{} 1.2} {{1234567 abcdefg} 1.3} {PID 3.0} {{} 3.1} {{} 3.2} {1234567 3.3}}
+	testget get-1.0 {Test field queries with ranges} $testmsg "PID.2-3" {{{} 1.2} {{1234567 abcdefg} 1.3} {{} 3.2} {1234567 3.3}}
+	testget get-1.0 {Test field queries with ranges (out of range)} $testmsg "1.2-7" {{{} 1.2} {{1234567 abcdefg} 1.3} {{} 1.4} {{} 1.5} {{} 1.6} {{} 1.7}}
+
+	testget get-1.0 {Test repetition queries} $testmsg "PID.3.0" {{1234567 1.3.0} {1234567 3.3.0}}
+	testget get-1.0 {Test repetition queries with *} $testmsg "PID.3.*" {{1234567 1.3.0} {abcdefg 1.3.1} {1234567 3.3.0}}
+	testget get-1.0 {Test repetition queries outside range} $testmsg "PID.3.4" {}
+
+	testget get-1.0 {Test component queries} $testmsg "TST.3.0.1" {{B 2.3.0.1}}
+	testget get-1.0 {Test component queries with *} $testmsg "TST.3.0.*" {{A 2.3.0.0} {B 2.3.0.1} {C 2.3.0.2} {D 2.3.0.3}}
+
+	testget get-1.0 {Test subcomponent queries} $testmsg "2.2.0.0.1" {{is 2.2.0.0.1}}
+	testget get-1.0 {Test subcomponent queries with *} $testmsg "TST.2.0.0.*" {{This 2.2.0.0.0} {is 2.2.0.0.1}}
+
+
+
+
+	testset set-1.0 {Test segment sets} $testmsg "PID" [list PID {} A B C D]
+	testset set-1.0 {Test field sets} $testmsg "PID.3" "ABCDE"
+	testset set-1.0 {Test repetition sets} $testmsg "PID.3.*" "ABCDE"
+	testset set-1.0 {Test component sets} $testmsg "PID.3.*.0" "ABCDE"
+	testset set-1.0 {Test subcomponent sets} $testmsg "PID.3.*.0.0" "ABCDE"
+
+
+
+
+
+
+	set message [join {
+		{MSH|^~\&|...}
+		{PID|1}
+	} \r]
+
+	set desired_message [join {
+		{MSH|^~\&|...}
+		{PID|1||||^TEST}
+	} \r]
+
+	tcltest::test set-1.0 {Test adding past existing field} -body {
+		set msg [Message::parse $message]
+		return [Message::data [GetSet::_set $msg PID.5.0.1.0 "TEST"]]
+	} -result $desired_message
+}

@@ -4,7 +4,7 @@ namespace eval Query {
 	################################################################################
 	# Public methods
 	################################################################################
-		proc query {msg query} {
+		proc query {msg query {expand 0}} {
 			# This proc turns an HL7 query address into a list
 			# of all matching static addresses.
 			#
@@ -37,9 +37,8 @@ namespace eval Query {
 			}
 
 
-			return [query_segments $msg $query_parts]
+			return [query_segments $msg $query_parts $expand]
 		}
-	
 	################################################################################
 	# Private methods (not intended for external use)
 	################################################################################
@@ -47,7 +46,7 @@ namespace eval Query {
 		########################################################################
 		# Query procs
 		########################################################################
-			proc query_segments {msg query_parts} {
+			proc query_segments {msg query_parts expand} {
 				# initialize the list of resulting static addresses
 				set addresses {}
 
@@ -65,7 +64,7 @@ namespace eval Query {
 						# yes, it matches, thus we process it
 
 						if { $field_part != "" } {
-							foreach address [query_fields [lindex $segments $i] $query_parts] {
+							foreach address [query_fields [lindex $segments $i] $query_parts $expand] {
 								lappend addresses "$i.$address"
 							}
 						} else {
@@ -78,7 +77,7 @@ namespace eval Query {
 				return $addresses
 			}
 
-			proc query_fields {segment query_parts} {
+			proc query_fields {segment query_parts expand} {
 				# initialize the list of resulting static addresses
 				set addresses {}
 
@@ -92,7 +91,7 @@ namespace eval Query {
 				foreach i [query_indexes $num_fields $field_part 1] {
 					if { $rep_part != "" } {
 						set field [lindex $segment $i]
-						foreach address [query_repetitions $field $query_parts] {
+						foreach address [query_repetitions $field $query_parts $expand] {
 							lappend addresses "${i}.${address}"
 						}
 					} else {
@@ -105,7 +104,7 @@ namespace eval Query {
 
 			}
 
-			proc query_repetitions {field query_parts} {
+			proc query_repetitions {field query_parts expand} {
 				# initialize the list of resulting static addresses
 				set addresses {}
 
@@ -116,10 +115,10 @@ namespace eval Query {
 				# get the list of repetitions in the field
 				set num_repetitions [llength $field]
 
-				foreach i [query_indexes $num_repetitions $rep_part 0] {
+				foreach i [query_indexes $num_repetitions $rep_part $expand] {
 					if { $comp_part != "" } {
 						set repetition [lindex $field $i]
-						foreach address [query_components $repetition $query_parts] {
+						foreach address [query_components $repetition $query_parts $expand] {
 							lappend addresses "${i}.${address}"
 						}
 					} else {
@@ -132,7 +131,7 @@ namespace eval Query {
 
 			}
 
-			proc query_components {repetition query_parts} {
+			proc query_components {repetition query_parts expand} {
 				# initialize the list of resulting static addresses
 				set addresses {}
 
@@ -143,10 +142,10 @@ namespace eval Query {
 				# get the list of components in the repetition
 				set num_components [llength $repetition]
 
-				foreach i [query_indexes $num_components $comp_part 0] {
+				foreach i [query_indexes $num_components $comp_part $expand] {
 					if { $subcomp_part != "" } {
 						set component [lindex $repetition $i]
-						foreach address [query_subcomponents $component $query_parts] {
+						foreach address [query_subcomponents $component $query_parts $expand] {
 							lappend addresses "${i}.${address}"
 						}
 					} else {
@@ -159,7 +158,7 @@ namespace eval Query {
 
 			}
 
-			proc query_subcomponents {component query_parts} {
+			proc query_subcomponents {component query_parts expand} {
 				# initialize the list of resulting static addresses
 				set addresses {}
 
@@ -169,7 +168,7 @@ namespace eval Query {
 				# get the list of subcomponents in the component
 				set num_subcomponents [llength $component]
 
-				foreach i [query_indexes $num_subcomponents $subcomp_part 0] {
+				foreach i [query_indexes $num_subcomponents $subcomp_part $expand] {
 					lappend addresses $i
 				}
 

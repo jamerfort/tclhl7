@@ -1,13 +1,24 @@
+#!/usr/bin/env tclsh
+
 namespace eval HL7 {
 	%{include msg.tcl}
 	
 	%{include query.tcl}
+
+	%{include get_set.tcl}
 }
 
 proc hl7 {cmd args} {
 	switch -exact -- $cmd {
 		parse { return [eval {HL7::Message::parse} $args] }
+		data { return [eval {HL7::Message::data} $args] }
+
 		query { return [eval {HL7::Query::query} $args] }
+
+		get { return [eval {HL7::GetSet::get} $args] }
+		set { return [eval {HL7::GetSet::_set} $args] }
+		each { return [eval {HL7::GetSet::each} $args] }
+
 		default {
 			error "Unknown command: $cmd"
 		}

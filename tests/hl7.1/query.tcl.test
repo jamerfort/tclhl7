@@ -13,8 +13,10 @@ namespace eval HL7 {
 			return $rslts
 		} -result $results
 
-		puts "\t$description"
-		puts "\t$query => $rslts"
+		if { [info exists ::env(SHOW_QUERY_RESULTS)] && $::env(SHOW_QUERY_RESULTS) } {
+			puts "\t$description"
+			puts "\t$query => $rslts"
+		}
 	}
 
 	tcltest::test query-1.0 {Test that it errors on an unparsed message.} -body {

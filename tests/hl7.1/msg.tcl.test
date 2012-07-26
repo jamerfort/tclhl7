@@ -30,6 +30,25 @@ namespace eval HL7 {
 
 
 
+	tcltest::test parse-1.0 {Test parsing a message's MSH segment (since it is off by one).} -body {
+		return [lindex [Message::parse $example_msg \n] 0 0 0]
+	} -result "MSH"
+
+	tcltest::test parse-1.0 {Test parsing a message's MSH segment (since it is off by one).} -body {
+		return [lindex [Message::parse $example_msg \n] 0 0 1]
+	} -result "|"
+
+	tcltest::test parse-1.0 {Test parsing a message's MSH segment (since it is off by one).} -body {
+		return [lindex [Message::parse $example_msg \n] 0 0 2]
+	} -result "^~\\&"
+
+	tcltest::test parse-1.0 {Test parsing a message's MSH segment (since it is off by one).} -body {
+		return [lindex [Message::parse $example_msg \n] 0 0 3 0 0 0]
+	} -result "GHH LAB"
+
+
+
+
 	tcltest::test has_been_parsed-1.0 {Test the "has_been_parsed" proc is true (1) with a parsed message.} -body {
 		return [Message::has_been_parsed [Message::parse $example_msg \n]]
 	} -result 1
@@ -40,4 +59,12 @@ namespace eval HL7 {
 	tcltest::test has_been_parsed-1.0 {Test the "has_been_parsed" proc is false (0) with an unparsed message.} -body {
 		return [Message::has_been_parsed $example_msg]
 	} -result 0
+
+
+
+
+
+	tcltest::test data-1.0 {Test the "data" proc.} -body {
+		return [Message::data [Message::parse $example_msg \n]]
+	} -result $example_msg
 }
