@@ -3,7 +3,7 @@ namespace eval GetSet {
 	################################################################################
 	# Public Methods
 	################################################################################
-		proc get {msg query} {
+		proc get {msg query {reverse 0}} {
 			# This proc pulls the values from the parsed message that match
 			# the given query.
 			#
@@ -30,7 +30,7 @@ namespace eval GetSet {
 			# 	}
 			set results {}
 
-			foreach address [HL7::Query::query $msg $query] {
+			foreach address [HL7::Query::query $msg $query 0 $reverse] {
 				set value [eval {lindex $msg 0} [split $address "."]]
 				lappend results [list $value $address]
 			}
@@ -38,7 +38,25 @@ namespace eval GetSet {
 			return $results
 		}
 
+		proc get_reverse {msg query} {
+			# get the reversed list of the results returned by "get"
+			return [get $msg $query 1]
+		}
+
+		proc get_values {msg query {reverse 0}} {
+			# return just the values, not value-address pairs of the
+			# results returned by "get"
+			set values {}
+
+			foreach rslt [get $msg $query $reverse] {
+				lappend values [lindex $rslt 0]
+			}
+
+			return $values
+		}
+
 		proc _set {msg query value {expand 1}} {
+			puts "### $value"
 			# This proc sets the value of a segment, field, etc.
 
 			# get the segments in the message
@@ -54,6 +72,16 @@ namespace eval GetSet {
 			set msg [lreplace $msg 0 0 $segments]
 
 			return $msg
+		}
+
+		proc clear {msg query} {
+			# Clear out the given query
+			return [_set $msg $query ""]
+		}
+
+		proc delete {msg query} {
+			# delete the addresses matching the given query
+			
 		}
 
 		proc each {msg query value_var address_var body} {

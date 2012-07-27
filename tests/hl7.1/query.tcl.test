@@ -76,4 +76,10 @@ namespace eval HL7 {
 
 	testquery query-1.0 {Test subcomponent queries} $testmsg "2.2.0.0.1" {2.2.0.0.1}
 	testquery query-1.0 {Test subcomponent queries with *} $testmsg "TST.2.0.0.*" {2.2.0.0.0 2.2.0.0.1}
+
+
+	tcltest::test query-1.0 {Test reversing the addresses} -body {
+		set msg [Message::parse [join $testmsg \r]]
+		return [Query::query $msg "TST.3.0.*" 0 1]
+	} -result {2.3.0.3 2.3.0.2 2.3.0.1 2.3.0.0}
 }

@@ -15,8 +15,28 @@ proc hl7 {cmd args} {
 
 		query { return [eval {HL7::Query::query} $args] }
 
-		get { return [eval {HL7::GetSet::get} $args] }
+		get {
+			switch -regexp -- [lindex $args 0] {
+				{^reversed?$} {
+					# get reverse
+					# get reversed
+					return [eval {HL7::GetSet::get_reverse} [lrange $args 1 end]]
+				}
+
+				{^values?$} {
+					# get value
+					# get values
+					return [eval {HL7::GetSet::get_values} [lrange $args 1 end]]
+				}
+
+				default {
+					# get
+					return [eval {HL7::GetSet::get} $args]
+				}
+			}
+		}
 		set { return [eval {HL7::GetSet::_set} $args] }
+		clear { return [eval {HL7::GetSet::clear} $args] }
 		each { return [eval {HL7::GetSet::each} $args] }
 
 		default {

@@ -243,7 +243,7 @@ namespace eval HL7 {
 		################################################################################
 		# Public methods
 		################################################################################
-			proc query {msg query {expand 0}} {
+			proc query {msg query {expand 0} {reverse 0}} {
 				# This proc turns an HL7 query address into a list
 				# of all matching static addresses.
 				#
@@ -276,11 +276,42 @@ namespace eval HL7 {
 				}
 	
 	
-				return [query_segments $msg $query_parts $expand]
+				set results [query_segments $msg $query_parts $expand]
+				
+				if { $reverse } {
+					return [lsort -command query_sort -decreasing $results]
+				} else {
+					return [lsort -command query_sort $results]
+				}
+				
 			}
 		################################################################################
 		# Private methods (not intended for external use)
 		################################################################################
+		
+			proc query_sort {address1 address2} {
+				if { $address1 == "" && $address2 != "" } {
+					return -1
+				} elseif { $address1 != "" && $address2 == "" } {
+					return 1
+				} elseif { $address1 == "" && $address2 == "" } {
+					return 0
+				}
+	
+				set parts1 [split $address1 "."]
+				set parts2 [split $address2 "."]
+				set i1 [lindex $parts1 0]
+				set i2 [lindex $parts2 0]
+	
+				if { $i1 == $i2 } {
+					set rest1 [join [lrange $parts1 1 end] "."]
+					set rest2 [join [lrange $parts2 1 end] "."]
+	
+					return [query_sort $rest1 $rest2]
+				} else {
+					return [expr $i1 - $i2]
+				}
+			}
 		
 			########################################################################
 			# Query procs
@@ -442,6 +473,19 @@ namespace eval HL7 {
 									}
 								}
 							}
+	
+							{^[0-9]+-end$} {
+								regexp {^([0-9]+)-end$} $query {} min
+								set max [expr {$count - 1}]
+	
+								puts "END: $min - $max"
+	
+								foreach address [query_indexes $count "${min}-${max}" $expand] {
+									set addresses($address) 1
+								}
+							}
+	
+							
 						}
 					}
 	
@@ -508,7 +552,7 @@ namespace eval HL7 {
 		################################################################################
 		# Public Methods
 		################################################################################
-			proc get {msg query} {
+			proc get {msg query {reverse 0}} {
 				# This proc pulls the values from the parsed message that match
 				# the given query.
 				#
@@ -535,7 +579,7 @@ namespace eval HL7 {
 				# 	}
 				set results {}
 	
-				foreach address [HL7::Query::query $msg $query] {
+				foreach address [HL7::Query::query $msg $query 0 $reverse] {
 					set value [eval {lindex $msg 0} [split $address "."]]
 					lappend results [list $value $address]
 				}
@@ -543,7 +587,25 @@ namespace eval HL7 {
 				return $results
 			}
 	
+			proc get_reverse {msg query} {
+				# get the reversed list of the results returned by "get"
+				return [get $msg $query 1]
+			}
+	
+			proc get_values {msg query {reverse 0}} {
+				# return just the values, not value-address pairs of the
+				# results returned by "get"
+				set values {}
+	
+				foreach rslt [get $msg $query $reverse] {
+					lappend values [lindex $rslt 0]
+				}
+	
+				return $values
+			}
+	
 			proc _set {msg query value {expand 1}} {
+				puts "### $value"
 				# This proc sets the value of a segment, field, etc.
 	
 				# get the segments in the message
@@ -559,6 +621,16 @@ namespace eval HL7 {
 				set msg [lreplace $msg 0 0 $segments]
 	
 				return $msg
+			}
+	
+			proc clear {msg query} {
+				# Clear out the given query
+				return [_set $msg $query ""]
+			}
+	
+			proc delete {msg query} {
+				# delete the addresses matching the given query
+				
 			}
 	
 			proc each {msg query value_var address_var body} {
@@ -617,8 +689,28 @@ proc hl7 {cmd args} {
 
 		query { return [eval {HL7::Query::query} $args] }
 
-		get { return [eval {HL7::GetSet::get} $args] }
+		get {
+			switch -regexp -- [lindex $args 0] {
+				{^reversed?$} {
+					# get reverse
+					# get reversed
+					return [eval {HL7::GetSet::get_reverse} [lrange $args 1 end]]
+				}
+
+				{^values?$} {
+					# get value
+					# get values
+					return [eval {HL7::GetSet::get_values} [lrange $args 1 end]]
+				}
+
+				default {
+					# get
+					return [eval {HL7::GetSet::get} $args]
+				}
+			}
+		}
 		set { return [eval {HL7::GetSet::_set} $args] }
+		clear { return [eval {HL7::GetSet::clear} $args] }
 		each { return [eval {HL7::GetSet::each} $args] }
 
 		default {

@@ -6,6 +6,26 @@ source tests/customMatchers.tcl
 source hl7.1/hl7.tcl
 
 namespace eval HL7 {
+	proc test_hl7 {name description msgdata desired_msgdata hl7 cmd args} {
+		tcltest::test $name $description -body {
+			set msg [hl7 parse [join $msgdata \n] \n]
+			set desired_msg [hl7 parse [join $desired_msgdata \n] \n]
+
+			set rslt [eval {hl7 $cmd $msg} $args]
+
+			if {[hl7 data $rslt] == [hl7 data $desired_msg]} {
+				return 1
+			} else {
+				return 0
+			}
+		} -result 1
+
+		if { [info exists ::env(SHOW_QUERY_RESULTS)] && $::env(SHOW_QUERY_RESULTS) } {
+			puts "   - [string map {\n "\n     "} [hl7 data $rslt]]"
+			puts "   - [string map {\n "\n     "} [hl7 data $desired_msg]]"
+		}
+	}
+
 	proc testget {name description message query results} {
 		tcltest::test $name $description -body {
 			set msg [Message::parse [join $message \r]]
@@ -103,18 +123,44 @@ namespace eval HL7 {
 
 
 
-	set message [join {
-		{MSH|^~\&|...}
-		{PID|1}
-	} \r]
+	test_hl7 set-1.0 {Test adding past existing field} {
+			{MSH|^~\&|...}
+			{PID|1}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||||^TEST}
+		} hl7 set "PID.5.0.1.0" "TEST"
 
-	set desired_message [join {
-		{MSH|^~\&|...}
-		{PID|1||||^TEST}
-	} \r]
 
-	tcltest::test set-1.0 {Test adding past existing field} -body {
-		set msg [Message::parse $message]
-		return [Message::data [GetSet::_set $msg PID.5.0.1.0 "TEST"]]
-	} -result $desired_message
+
+	tcltest::test get_reverse-1.0 {Test getting the reverse of a query} -body {
+		set msg [Message::parse [join $testmsg \r]]
+		return [GetSet::get_reverse $msg "TST.3.0.*"]
+	} -result {{D 2.3.0.3} {C 2.3.0.2} {B 2.3.0.1} {A 2.3.0.0}}
+
+
+
+
+	tcltest::test get_values-1.0 {Test getting the values of a query} -body {
+		set msg [Message::parse [join $testmsg \r]]
+		return [GetSet::get_values $msg "TST.3.0.*"]
+	} -result {A B C D}
+
+	tcltest::test get_values-1.0 {Test getting the reversed values of a query} -body {
+		set msg [Message::parse [join $testmsg \r]]
+		return [GetSet::get_values $msg "TST.3.0.*" 1]
+	} -result {D C B A}
+
+
+
+
+
+	test_hl7 clear-1.0 {Test clearing} {
+			{MSH|^~\&|...}
+			{PID|1||||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||||^}
+		} hl7 clear "PID.5.0.1.0"
+
 }

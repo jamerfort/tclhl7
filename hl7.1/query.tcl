@@ -4,7 +4,7 @@ namespace eval Query {
 	################################################################################
 	# Public methods
 	################################################################################
-		proc query {msg query {expand 0}} {
+		proc query {msg query {expand 0} {reverse 0}} {
 			# This proc turns an HL7 query address into a list
 			# of all matching static addresses.
 			#
@@ -37,11 +37,42 @@ namespace eval Query {
 			}
 
 
-			return [query_segments $msg $query_parts $expand]
+			set results [query_segments $msg $query_parts $expand]
+			
+			if { $reverse } {
+				return [lsort -command query_sort -decreasing $results]
+			} else {
+				return [lsort -command query_sort $results]
+			}
+			
 		}
 	################################################################################
 	# Private methods (not intended for external use)
 	################################################################################
+	
+		proc query_sort {address1 address2} {
+			if { $address1 == "" && $address2 != "" } {
+				return -1
+			} elseif { $address1 != "" && $address2 == "" } {
+				return 1
+			} elseif { $address1 == "" && $address2 == "" } {
+				return 0
+			}
+
+			set parts1 [split $address1 "."]
+			set parts2 [split $address2 "."]
+			set i1 [lindex $parts1 0]
+			set i2 [lindex $parts2 0]
+
+			if { $i1 == $i2 } {
+				set rest1 [join [lrange $parts1 1 end] "."]
+				set rest2 [join [lrange $parts2 1 end] "."]
+
+				return [query_sort $rest1 $rest2]
+			} else {
+				return [expr $i1 - $i2]
+			}
+		}
 	
 		########################################################################
 		# Query procs
@@ -203,6 +234,19 @@ namespace eval Query {
 								}
 							}
 						}
+
+						{^[0-9]+-end$} {
+							regexp {^([0-9]+)-end$} $query {} min
+							set max [expr {$count - 1}]
+
+							puts "END: $min - $max"
+
+							foreach address [query_indexes $count "${min}-${max}" $expand] {
+								set addresses($address) 1
+							}
+						}
+
+						
 					}
 				}
 
