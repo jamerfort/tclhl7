@@ -605,7 +605,6 @@ namespace eval HL7 {
 			}
 	
 			proc _set {msg query value {expand 1}} {
-				puts "### $value"
 				# This proc sets the value of a segment, field, etc.
 	
 				# get the segments in the message
@@ -631,6 +630,39 @@ namespace eval HL7 {
 			proc delete {msg query} {
 				# delete the addresses matching the given query
 				
+				# get the segments in the message
+				set segments [lindex $msg 0]
+	
+				# run a reverse query of the items to be deleted
+				foreach address [HL7::Query::query $msg $query 0 1] {
+					# split the address
+					set indexes [split $address "."]
+	
+					# remove the item
+					set segments [ldelete $segments $indexes]
+				}
+	
+				# add the segments back into the message
+				set msg [lreplace $msg 0 0 $segments]
+	
+				return $msg
+	
+			}
+	
+			proc add {msg query value} {
+	
+			}
+	
+			proc insert {msg query value} {
+	
+			}
+	
+			proc insert_before {msg query value} {
+	
+			}
+	
+			proc insert_after {msg query value} {
+	
 			}
 	
 			proc each {msg query value_var address_var body} {
@@ -678,6 +710,20 @@ namespace eval HL7 {
 	
 				return $l
 			}
+	
+			proc ldelete {l indexes} {
+				# nested delete
+	
+				set parent_indexes [lrange $indexes 0 end-1]
+				set i [lindex $indexes end]
+	
+				set parent [lindex $l $parent_indexes]
+				set parent [lreplace $parent $i $i]
+	
+				lset l $parent_indexes $parent
+	
+				return $l
+			}
 	}
 	
 }
@@ -711,6 +757,27 @@ proc hl7 {cmd args} {
 		}
 		set { return [eval {HL7::GetSet::_set} $args] }
 		clear { return [eval {HL7::GetSet::clear} $args] }
+		delete { return [eval {HL7::GetSet::delete} $args] }
+		add { return [eval {HL7::GetSet::add} $args] }
+		insert {
+			switch -exact -- [lindex $args 0] {
+				before {
+					# insert before
+					return [eval {HL7::GetSet::insert_before} [lrange $args 1 end]]
+				}
+
+				after {
+					# insert after
+					return [eval {HL7::GetSet::insert_after} [lrange $args 1 end]]
+				}
+
+				default {
+					# insert
+					return [eval {HL7::GetSet::insert} $args]
+				}
+			}
+		}
+
 		each { return [eval {HL7::GetSet::each} $args] }
 
 		default {

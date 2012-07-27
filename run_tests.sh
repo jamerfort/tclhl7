@@ -1,7 +1,7 @@
 #!/bin/bash
 
-export SHOW_QUERY_RESULTS=1
-#export SHOW_QUERY_RESULTS=0
+#export SHOW_QUERY_RESULTS=1
+export SHOW_QUERY_RESULTS=0
 
 # build first
 ./build.sh

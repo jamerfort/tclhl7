@@ -56,7 +56,6 @@ namespace eval GetSet {
 		}
 
 		proc _set {msg query value {expand 1}} {
-			puts "### $value"
 			# This proc sets the value of a segment, field, etc.
 
 			# get the segments in the message
@@ -82,6 +81,39 @@ namespace eval GetSet {
 		proc delete {msg query} {
 			# delete the addresses matching the given query
 			
+			# get the segments in the message
+			set segments [lindex $msg 0]
+
+			# run a reverse query of the items to be deleted
+			foreach address [HL7::Query::query $msg $query 0 1] {
+				# split the address
+				set indexes [split $address "."]
+
+				# remove the item
+				set segments [ldelete $segments $indexes]
+			}
+
+			# add the segments back into the message
+			set msg [lreplace $msg 0 0 $segments]
+
+			return $msg
+
+		}
+
+		proc add {msg query value} {
+
+		}
+
+		proc insert {msg query value} {
+
+		}
+
+		proc insert_before {msg query value} {
+
+		}
+
+		proc insert_after {msg query value} {
+
 		}
 
 		proc each {msg query value_var address_var body} {
@@ -126,6 +158,24 @@ namespace eval GetSet {
 				# yes
 				set l [lreplace $l $i $i [lexpand [lindex $l $i] $indexes]]
 			}
+
+			return $l
+		}
+
+		proc ldelete {l indexes} {
+			# nested delete
+
+			set parent_indexes [lrange $indexes 0 end-1]
+			set i [lindex $indexes end]
+
+			# get the parent list
+			set parent [lindex $l $parent_indexes]
+
+			# remove the desired item
+			set parent [lreplace $parent $i $i]
+
+			# replace the parent in the original list with the new value
+			lset l $parent_indexes $parent
 
 			return $l
 		}

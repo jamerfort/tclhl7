@@ -37,6 +37,27 @@ proc hl7 {cmd args} {
 		}
 		set { return [eval {HL7::GetSet::_set} $args] }
 		clear { return [eval {HL7::GetSet::clear} $args] }
+		delete { return [eval {HL7::GetSet::delete} $args] }
+		add { return [eval {HL7::GetSet::add} $args] }
+		insert {
+			switch -exact -- [lindex $args 0] {
+				before {
+					# insert before
+					return [eval {HL7::GetSet::insert_before} [lrange $args 1 end]]
+				}
+
+				after {
+					# insert after
+					return [eval {HL7::GetSet::insert_after} [lrange $args 1 end]]
+				}
+
+				default {
+					# insert
+					return [eval {HL7::GetSet::insert} $args]
+				}
+			}
+		}
+
 		each { return [eval {HL7::GetSet::each} $args] }
 
 		default {
