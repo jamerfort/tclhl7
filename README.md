@@ -100,6 +100,21 @@ Using the example HL7 message above, the query address `PID.3.*.0.0` expands to 
 - `1.3.0.0.0`
 - `1.3.1.0.0`
 
+Installing/Using the Library
+----------------------
+To use the library, source the `build/hl7.tcl` file into your TCL scripts.  The full library is contained in the `hl7.tcl` file, thus you can source it directly in your code or you can add it to you `auto_path`.
+
+	#!/usr/bin/env tclsh
+
+	# source the TclHL7 library
+	source hl7.tcl
+
+	# ...
+
+	# Use the TclHL7 library!
+	set msg [hl7 parse $msgdata]
+
+
 HL7 Commands
 ------------
 Below are the commands provided by TclHL7.
