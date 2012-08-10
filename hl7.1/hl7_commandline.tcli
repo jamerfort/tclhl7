@@ -1,0 +1,17 @@
+#!/usr/bin/env tclsh
+
+%{include hl7.tcli}
+
+fconfigure stdin -translation lf
+
+set cmd [lindex $argv 0]
+set args [lrange $argv 1 end]
+
+while { ![eof stdin] } {
+	set msgdata [gets stdin]
+
+	set msg [hl7 parse $msgdata \r]
+
+
+	puts [hl7 data [eval {hl7 $cmd $msg} $args]]
+}

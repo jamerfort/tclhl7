@@ -19,22 +19,17 @@ namespace eval TclInclude {
 			set out [open $outfilename w]
 		}
 
+		return [process_file_handles $in $out $path]
+	}
+
+	proc process_file_handles {in out path} {
 		# process each
 		while { ![eof $in] } {
 			# get the next line
 			set line [gets $in]
 
-			# does the line contain the include tag?
-			if { [regexp {^(\s*)(#\s*)?%{([^\s]*)\s+(.*)}} $line whole_match leading comment cmd args] } {
-				if { [regexp {^[_\s]} $cmd] } {
-					error "ERROR: Cannot call hidden command '$cmd'"
-				}
-
-				eval {TclInclude::Commands::$cmd $out $path $leading $comment} $args
-			} else {	
-				# no include tag
-				puts $out $line
-			}
+			# parse the line
+			process_line $line $out $path
 		}
 
 		close $in
@@ -42,23 +37,19 @@ namespace eval TclInclude {
 
 	}
 
-	proc process_file_handles {infile outfile path} {
-		# process each
-		while { ![eof $in] } {
-			# get the next line
-			set line [gets $in]
-
-			# does the line contain the include tag?
-			if { [regexp {^(\s*)(#\s*)?%{([^\s]*)\s+(.*)}} $line whole_match leading comment cmd args] } {
-				if { [regexp {^[_\s]} $cmd] } {
-					error "ERROR: Cannot call hidden command '$cmd'"
-				}
-
-				eval {TclInclude::Commands::$cmd $out $path $leading $comment} $args
-			} else {	
-				# no include tag
-				puts $out $line
+	proc process_line {line out path {orig_leading ""}} {
+		# parse the line for tags
+		if { [regexp {^(\s*)(#\s*)?%{([^\s]*)\s+(.*)}} $line whole_match leading comment cmd args] } {
+			if { [regexp {^[_\s]} $cmd] } {
+				error "ERROR: Cannot call hidden command '$cmd'"
 			}
+
+			set leading "${orig_leading}${leading}"
+
+			eval {TclInclude::Commands::$cmd $out $path $leading $comment} $args
+		} else {	
+			# no include tag
+			puts $out "${orig_leading}${line}"
 		}
 	}
 
@@ -77,7 +68,7 @@ namespace eval TclInclude {
 			while { ![eof $f] } {
 				set line [gets $f]
 
-				puts $outfile "${leading}${line}"
+				TclInclude::process_line $line $outfile $path $leading
 			}
 			
 			close $f
