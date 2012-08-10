@@ -1,13 +1,11 @@
-<!--
-<style>
+<!-- <style>
 	pre {
 		overflow: auto;
 		border: 1px solid #888;
 		padding: 20px;
 		margin: 0 20px;
 	}
-</style>
--->
+</style> -->
 
 TclHL7 - HL7 Addressing Library for TCL
 =======================================
@@ -21,19 +19,19 @@ HL7 Message Structure
 An HL7 message has the following structure:
 
 - A message contains a list of segments.
-	- Typically separated by \r
+	- Typically separated by `\r`
 - A segment is made up of a list of fields.
-	- Typically separated by |
+	- Typically separated by `|`
 - A field is made up of a list of field repetitions.
-	- Typically separated by ~
+	- Typically separated by `~`
 - A field repetition is made up of a list of components.
-	- Typically separated by ^
+	- Typically separated by `^`
 - A component is made up of a list of subcomponents.
-	- Typically separated by &
+	- Typically separated by `&`
 
 Example HL7 Message
 -------------------
-Below is an example HL7 message.  Note that the each segment has been placed on it's own line, thus newlines (\n) can be considered the segment separator in this example.  Typically, a carriage return (\r) is used as the segment separator.
+Below is an example HL7 message.  Note that each segment has been placed on it's own line, thus newlines (`\n`) can be considered the segment separator in this example.  Typically, a carriage return (`\r`) is used as the segment separator.
 
 	MSH|^~\&|GHH LAB|ELAB-3|GHH OE|BLDG4|200202150930||ORU^R01|CNTRL-3456|P|2.4
 	PID|||555-44-4444~1234567||EVERYWOMAN^EVE^E^^^^L|JONES|19620320|F|||153 FERNWOOD DR.^^STATESVILLE^OH^35292||(206)3345232|(206)752-121||||AC555444444||67-A4335^OH^20030520
@@ -42,13 +40,13 @@ Below is an example HL7 message.  Note that the each segment has been placed on 
 
 Typical Parsing in TCL
 ----------------------
-Typically, when parsing an HL7 message in TCL, you have to break the message apart based on the given separators.  When modifying the message, you not only have to split the message to pull data out, but you also have to rebuild the message when complete.
+Typically, when parsing an HL7 message in TCL, you have to break the message apart based on the given separators.  When modifying the message, you not only have to split the message to pull data out, but you also have to rebuild the message afterwards.
 
 This parsing and rebuilding is well suited for TCL, but unfortunately, the parsing/rebuilding logic takes away from the actual problem that you are actually trying to solve.  That's where this library can help.
 
 HL7 Addressing Scheme
 ---------------------
-By creating an addressing scheme for HL7 fields, components, etc., we are able to abstract the parsing and rebuilding logic behind a TCL library.
+By creating an addressing scheme for HL7 fields, components, etc., we are able to abstract away the parsing and rebuilding logic behind a TCL library.
 
 The addressing scheme that TclHL7 uses is closely related to the structure of an HL7 message (see above).
 
@@ -72,6 +70,12 @@ where:
 - `0` is the component address part
 - `0` is the subcomponent address part
 
+Wildcards can also be used to address more than one item in a message.  To address the first subcomponent of each ID in PID.3, the following query address can be used:
+
+	PID.3.*.0.0
+
+This is the same as the previous example, except that the `*` now matches **all** repetitions in PID.3.
+
 The segment address part can match in the following ways:
 
 1. segment type: `MSH`, `PID`, etc.
@@ -87,9 +91,9 @@ The field, repetition, component, and subcomponent address parts match in the fo
 
 ### Static Addresses
 
-The addressing scheme mentioned above describe what I like to call **query addresses**.  They are capable of matching more than one item in an HL7 message.  While this is helpful, you also need a canonical way to address a given item.
+The addressing scheme mentioned above describes what I like to call **query addresses**.  They are capable of matching more than one item in an HL7 message.  While this is helpful, you also need a canonical way to address a given item.
 
-The canonical address of an item in an HL7 message is also called a **static address**.  A static address is made up of five parts joined by periods (just like the query addresses).  Where query address parts can contain wildcards, static address parts can only contain a single index.  This being said, a static address can also be used as a query address.
+The canonical address of an item in an HL7 message is called a **static address**.  A static address is made up of five parts joined by periods (just like the query addresses).  Where query address parts can contain wildcards, static address parts can only contain a single index.  This being said, a static address can also be used as a query address.
 
 Using the example HL7 message above, the query address `PID.3.*.0.0` expands to the following static addresses:
 
@@ -158,12 +162,12 @@ Usage:
 		expand (optional):
 			- Default: 0
 			- Set this argument to `1` to return addresses that match repetitions, components, or subcomponents that do not exist.
-			- For example, if a field on has one repetition, by default, a query addressing the third repetition would not be returned.  By setting `expand` to `1`, the "invisible" repetition's address would be returned.
+			- For example, if a field only has one repetition, by default, a query addressing the third repetition would not be returned.  By setting `expand` to `1`, the "invisible" repetition's address would be returned.
 			- This argument does not affect segments or fields.  Segments are never expanded, fields are always expanded.
 		reverse (optional):
 			- Default: 0
 			- By default, the `query` command returns a sorted list of static addresses, with the addresses in the order that you would find them as you move from the start of the message to the end.  By settting this to `1`, you will get a reverse-sorted list of addresses.
-			- This is useful for when you are performing destructive actions on a message (such as removing segments, repetitions, etc.).  If you perform an action that changes other item's static address/index, then the items need to be processed from the back of the message to the front.  Otherwise, you may invalidate any previously queried addresses.
+			- This is useful for when you are performing destructive actions on a message (such as removing segments, repetitions, etc.).  If you perform an action that changes another item's static address/index, then the items need to be processed from the back of the message to the front.  Otherwise, you may invalidate any previously queried addresses.
 
 Example Usage:
 	
@@ -184,7 +188,7 @@ Example Usage:
 
 This proc is used to actually pull data out of an HL7 message.  It always returns a **list** of matches.
 
-By default, this proc returns a list of value-address pairs.  The value is the value of the matched item, and the address is the static address of the matched item.  This allows you analyze the value and then issue subsequent modification commands on item's static address.  There is a form of the `get` command that returns a list of matched values, not a list of matched value-address pairs.  If you need just the matched addresses, you can use the `query` command.
+By default, this proc returns a list of value-address pairs.  The value is the value of the matched item, and the address is the static address of the matched item.  This allows you analyze the value and then issue subsequent modification commands using the item's static address.  There is a form of the `get` command that returns a list of matched values, not a list of matched value-address pairs.  If you need just the matched addresses, you can use the `query` command.
 
 Usage:
 
@@ -279,7 +283,7 @@ Usage:
 Example Usage:
 
 	# set the sending and receiving facilities to '01'
-	set msg [hl7 set $msg MSH.3,5.0.0.0 "01"]
+	set msg [hl7 set $msg MSH.4,6.0.0.0 "01"]
 
 ### `clear`
 
@@ -319,7 +323,7 @@ Example Usage:
 
 This proc appends the given value to the end of the items indicated by the query.  The modified parsed-message is returned.
 
-Note that this can't be run on segments or subcomponents.  You can't run it on segments because appending a field to the endof a segment is usually not needed (usually, the field index has meaning).  You can bypass this by using `set`.  You can't run this on subcomponents because there are not items at a lower level than subcomponents.
+Note that this can't be run on segments or subcomponents.  You can't run it on segments because appending a field to the end of a segment is usually not needed (usually, the field index has meaning).  You can bypass this by using `set`.  You can't run this on subcomponents because there are not items at a level lower than subcomponents.
 
 Usage:
 
@@ -400,3 +404,32 @@ You can also loop over just the values, if you have no need for the addresses:
 		puts "$value"
 	}
 	
+The first argument passed to `hl7 each` determines the names of the variables set in the body.  The body of this `hl7 each` loop is the last argument passed to the command.  The rest of the arguments (between the variable names and the body) get passed to the `get` command, so you can also reverse and expand the query as needed.
+
+For example:
+
+	# loop through each item, in reverse order
+	hl7 each {v a} $msg PID.3.*.0.0 1 {
+		# do something with the value
+		puts "$a) $v"
+	}
+
+Usage:
+
+	hl7 each <vars> <msg> <query> [<reverse>] [<expand>] <body>
+
+	Arguments:
+		vars: This argument determines the names of the variables that will get set for each iteration of the results.
+			- If this argument has one item, only the value of each iteration is set.
+			- If this arguemnt has more than two items, the first name given will get set to the value of the current iteration's result.  The second name given will get set to the address of the current iteration's result.
+		msg: The message being queried against.
+		query: The query indicating the items to be matched.
+		body: This is the body that will be run for each item in the results.
+		reverse (optional):
+			- Default: 0
+			- If set to `1`, the command reverses the results.
+			- See the comments on reversing for the `query` command.
+		expand (optional):
+			- Default: 0
+			- This is passed to the `query` command.  If a queried item does not exist and the `query` call returns an address for the missing item, the value is set to a blank string ("").
+			- See the comments on expanding for the `query` command.

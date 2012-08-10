@@ -180,14 +180,22 @@ namespace eval GetSet {
 			return [insert_with_offset $msg $query $value 1]
 		}
 
-		proc each {vars msg query body} {
+		proc each {vars msg query args} {
+			if { [llength $args] == 0 } {
+				error "ERROR: A body must be provided to 'each'"
+			}
+
+			# pull the body out of the args
+			set body [lindex $args end]
+			set args [lrange $args 0 end-1]
+	
 			set value_var [lindex $vars 0]
 			set address_var [lindex $vars 1]
 
 			upvar 1 $value_var value
 			upvar 1 $address_var address
 
-			foreach rslt [get $msg $query] {
+			foreach rslt [eval {get $msg $query} $args] {
 				set value [lindex $rslt 0]
 				set address [lindex $rslt 1]
 				uplevel 1 $body		

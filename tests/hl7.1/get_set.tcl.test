@@ -394,14 +394,4 @@ namespace eval HL7 {
 
 		return $values
 	} -result {ABC TST HEY}
-
-
-
-
-
-
-
-
-	tcltest::test get-1.0 {Test get with expand} -body { return "ADD TEST" } -result {}
-
 }

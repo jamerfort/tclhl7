@@ -7,3 +7,7 @@ do
 	echo tclsh include.tcl "$F" "$OUTPUT"
 	tclsh include.tcl "$F" "$OUTPUT"
 done
+
+# build the README.md.html
+echo "Generating HTML documentation."
+perl Markdown.pl README.md | sed 's/<!-- <style>/<style>/; s!</style> -->!</style>!;' > README.md.html
