@@ -1,3 +1,4 @@
+<!--
 <style>
 	pre {
 		overflow: auto;
@@ -6,6 +7,7 @@
 		margin: 0 20px;
 	}
 </style>
+-->
 
 TclHL7 - HL7 Addressing Library for TCL
 =======================================
@@ -378,14 +380,14 @@ Notice that with this example, you have to manually pull out each result's value
 For example, the above becomes the following when using `hl7 each`:
 
 	# loop through each item
-	hl7 each {value address] $msg PID.3.*.0.0 {
+	hl7 each {value address} $msg PID.3.*.0.0 {
 		# do something with the value and address
 		puts "$address) $value"
 	}
 
 	# The variables can be named whatever you like.
 	# This is the same as the above example.
-	hl7 each {v a] $msg PID.3.*.0.0 {
+	hl7 each {v a} $msg PID.3.*.0.0 {
 		# do something with the value and address
 		puts "$a) $v"
 	}
