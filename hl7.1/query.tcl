@@ -32,7 +32,7 @@ namespace eval Query {
 			# verify that the query parts are of the right length
 			if { $num_parts > 5 } {
 				error "Too many query parts. Between 1 and 5 parts allowed."
-			} elseif { $num_parts <= 0 } {
+			} elseif { $num_parts < 0 } {
 				error "Not enough query parts. Between 1 and 5 parts allowed."
 			}
 
@@ -280,7 +280,7 @@ namespace eval Query {
 				# split the query
 				foreach query [split $seg_query ","] {
 					# check on segment type and index
-					if { $seg_type == $query || $index == $query } {
+					if { $seg_type == $query || $index == $query || $query == "*" } {
 						return 1
 					}
 				}

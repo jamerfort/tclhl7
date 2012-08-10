@@ -271,7 +271,7 @@ namespace eval HL7 {
 				# verify that the query parts are of the right length
 				if { $num_parts > 5 } {
 					error "Too many query parts. Between 1 and 5 parts allowed."
-				} elseif { $num_parts <= 0 } {
+				} elseif { $num_parts < 0 } {
 					error "Not enough query parts. Between 1 and 5 parts allowed."
 				}
 	
@@ -519,7 +519,7 @@ namespace eval HL7 {
 					# split the query
 					foreach query [split $seg_query ","] {
 						# check on segment type and index
-						if { $seg_type == $query || $index == $query } {
+						if { $seg_type == $query || $index == $query || $query == "*" } {
 							return 1
 						}
 					}
@@ -552,7 +552,7 @@ namespace eval HL7 {
 		################################################################################
 		# Public Methods
 		################################################################################
-			proc get {msg query {reverse 0}} {
+			proc get {msg query {reverse 0} {expand 0}} {
 				# This proc pulls the values from the parsed message that match
 				# the given query.
 				#
@@ -577,9 +577,19 @@ namespace eval HL7 {
 				#		# do something
 				#		puts "$address ==> $value"
 				# 	}
+	
+	
+				# is this a blank query, which means get the list of segments
+				if { $query == "" } {
+					set value [lindex $msg 0]
+					set address ""
+					set value_address_pair [list $value $address]
+					return [list $value_address_pair]
+				}
+	
 				set results {}
 	
-				foreach address [HL7::Query::query $msg $query 0 $reverse] {
+				foreach address [HL7::Query::query $msg $query $expand $reverse] {
 					set value [eval {lindex $msg 0} [split $address "."]]
 					lappend results [list $value $address]
 				}
@@ -587,17 +597,17 @@ namespace eval HL7 {
 				return $results
 			}
 	
-			proc get_reverse {msg query} {
+			proc get_reverse {msg query {expand 0}} {
 				# get the reversed list of the results returned by "get"
-				return [get $msg $query 1]
+				return [get $msg $query 1 $expand]
 			}
 	
-			proc get_values {msg query {reverse 0}} {
+			proc get_values {msg query {reverse 0} {expand 0}} {
 				# return just the values, not value-address pairs of the
 				# results returned by "get"
 				set values {}
 	
-				foreach rslt [get $msg $query $reverse] {
+				foreach rslt [get $msg $query $reverse $expand] {
 					lappend values [lindex $rslt 0]
 				}
 	
@@ -606,6 +616,12 @@ namespace eval HL7 {
 	
 			proc _set {msg query value {expand 1}} {
 				# This proc sets the value of a segment, field, etc.
+				
+				# handle the special case of a blank query, thus indicating setting the segments
+				if { $query == "" } {
+					set msg [lreplace $msg 0 0 $value]
+					return $msg
+				}
 	
 				# get the segments in the message
 				set segments [lindex $msg 0]
@@ -649,29 +665,81 @@ namespace eval HL7 {
 	
 			}
 	
-			proc add {msg query value} {
+			proc add {msg query value {expand 1}} {
+				# get the depth of the query
+				set query_depth [llength [split $query "."]]
 	
+				# don't allow this to run on segments or subcomponents
+				if { $query_depth == 1 || $query_depth == 5 } {
+					error "ERROR: hl7 add should not be run on segments or subcomponents."
+				}
+	
+				foreach rslt [get_reverse $msg $query $expand] {
+					set rslt_value [lindex $rslt 0]
+					set address [lindex $rslt 1]
+	
+					# add to the rslt_value
+					lappend rslt_value $value
+	
+					# set the new value
+					set msg [_set $msg $address $rslt_value]
+				}
+	
+				return $msg
+			}
+	
+			proc insert_with_offset {msg query value {offset 0}} {
+				# get the depth of the query
+				set query_depth [llength [split $query "."]]
+	
+				# don't allow this to run on fields
+				if { $query_depth == 2 } {
+					error "ERROR: hl7 insert should not be run on fields."
+				}
+	
+				foreach address [HL7::Query::query $msg $query 1 1] {
+					set address_parts [split $address "."]
+					set parent_address [join [lrange $address_parts 0 end-1] "."]
+					set index [expr {[lindex $address_parts end] + $offset}]
+	
+					# get the parent part of the message
+					set parent [lindex [get_values $msg $parent_address 0 1] 0]
+	
+					# insert the value at the specified index in the parent
+					if { [llength $parent] < $index } {
+						set parent [lexpand $parent [expr {$index - 1}]]
+					}
+	
+					set parent [linsert $parent $index $value]
+					set msg [_set $msg $parent_address $parent]
+				}
+	
+				return $msg
 			}
 	
 			proc insert {msg query value} {
-	
+				return [insert_with_offset $msg $query $value 0]
 			}
 	
 			proc insert_before {msg query value} {
-	
+				return [insert_with_offset $msg $query $value 0]
 			}
 	
 			proc insert_after {msg query value} {
-	
+				return [insert_with_offset $msg $query $value 1]
 			}
 	
-			proc each {msg query value_var address_var body} {
-				proc __each_proc [list $value_var $address_var] $body
+			proc each {vars msg query body} {
+				set value_var [lindex $vars 0]
+				set address_var [lindex $vars 1]
+	
+				upvar 1 $value_var value
+				upvar 1 $address_var address
 	
 				foreach rslt [get $msg $query] {
 					set value [lindex $rslt 0]
 					set address [lindex $rslt 1]
-					__each_proc $value $address 		
+					uplevel 1 $body		
 				}
 			}
 	
@@ -717,9 +785,13 @@ namespace eval HL7 {
 				set parent_indexes [lrange $indexes 0 end-1]
 				set i [lindex $indexes end]
 	
+				# get the parent list
 				set parent [lindex $l $parent_indexes]
+	
+				# remove the desired item
 				set parent [lreplace $parent $i $i]
 	
+				# replace the parent in the original list with the new value
 				lset l $parent_indexes $parent
 	
 				return $l
@@ -777,8 +849,13 @@ proc hl7 {cmd args} {
 				}
 			}
 		}
+		insert_before { return [eval {HL7::GetSet::insert_before} $args] }
+		insert_after { return [eval {HL7::GetSet::insert_after} $args] }
 
-		each { return [eval {HL7::GetSet::each} $args] }
+		each {
+			set body [concat {HL7::GetSet::each} $args]
+			uplevel 1 $body
+		}
 
 		default {
 			error "Unknown command: $cmd"

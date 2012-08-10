@@ -57,8 +57,13 @@ proc hl7 {cmd args} {
 				}
 			}
 		}
+		insert_before { return [eval {HL7::GetSet::insert_before} $args] }
+		insert_after { return [eval {HL7::GetSet::insert_after} $args] }
 
-		each { return [eval {HL7::GetSet::each} $args] }
+		each {
+			set body [concat {HL7::GetSet::each} $args]
+			uplevel 1 $body
+		}
 
 		default {
 			error "Unknown command: $cmd"

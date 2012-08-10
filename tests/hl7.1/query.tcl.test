@@ -41,13 +41,13 @@ namespace eval HL7 {
 
 
 
-	tcltest::test query-1.0 {Test that it errors on a query with too few parts} -body {
+	tcltest::test query-1.0 {Test that it returns blank on blank queries, thus indicating a list of segments} -body {
 		set msg [Message::parse [join {
 				{MSH|^~\&|}
 				{PID|||1234567}
 		} \r]]
 		return [Query::query $msg ""]
-	} -returnCodes error -result "Not enough query parts. Between 1 and 5 parts allowed."
+	} -result ""
 
 
 	set testmsg {

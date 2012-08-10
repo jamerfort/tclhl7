@@ -163,4 +163,245 @@ namespace eval HL7 {
 			{PID|1||||^}
 		} hl7 clear "PID.5.0.1.0"
 
+
+
+
+
+	test_hl7 add-1.0 {Test adding a segment} {
+			{MSH|^~\&|...}
+			{PID|1||||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||||^TEST}
+			{TST|This is a test segment}
+		} hl7 add "" {TST {{{{This is a test segment}}}}}
+
+	tcltest::test add-1.0 {Test that adding a field errors out} -body {
+		set msg [hl7 parse [join {
+				{MSH|^~\&|...}
+				{PID|1||||^TEST}
+			} "\r"]]
+
+		hl7 add $msg "PID" TST
+	} -returnCodes error -result  "ERROR: hl7 add should not be run on segments or subcomponents."
+
+	test_hl7 add-1.0 {Test adding a repetition} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||ABC~TST||^TEST}
+		} hl7 add "PID.3" TST
+
+	test_hl7 add-1.0 {Test adding a component} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||ABC^TST||^TEST}
+		} hl7 add "PID.3.0" TST
+
+	test_hl7 add-1.0 {Test adding a subcomponent} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||ABC&TST||^TEST}
+		} hl7 add "PID.3.0.0" TST
+
+	tcltest::test add-1.0 {Test that adding deeper than a subcomponent errors out} -body {
+		set msg [hl7 parse [join {
+				{MSH|^~\&|...}
+				{PID|1||||^TEST}
+			} "\r"]]
+
+		hl7 add $msg "PID.3.0.0.0" TST
+	} -returnCodes error -result  "ERROR: hl7 add should not be run on segments or subcomponents."
+
+
+
+
+
+
+	test_hl7 insert-1.0 {Test inserting a segment} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{TST}
+			{PID|1||ABC||^TEST}
+		} hl7 insert "PID" TST
+
+	tcltest::test insert-1.0 {Test inserting a field errors out} -body {
+		set msg [hl7 parse [join {
+				{MSH|^~\&|...}
+				{PID|1||||^TEST}
+			} "\r"]]
+
+		hl7 insert $msg "PID.0" TST
+	} -returnCodes error -result  "ERROR: hl7 insert should not be run on fields."
+
+	test_hl7 insert-1.0 {Test inserting a repetition} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||TST~ABC||^TEST}
+		} hl7 insert "PID.3.0" TST
+
+	test_hl7 insert-1.0 {Test inserting a component} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TST^TEST}
+		} hl7 insert "PID.5.0.1" TST
+
+	test_hl7 insert-1.0 {Test inserting a subcomponent} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||TST&ABC||^TEST}
+		} hl7 insert "PID.3.0.0.0" TST
+
+
+
+
+
+
+	test_hl7 insert_before-1.0 {Test inserting before a segment} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{TST}
+			{PID|1||ABC||^TEST}
+		} hl7 insert_before "PID" TST
+
+	tcltest::test insert_before-1.0 {Test inserting before a field errors out} -body {
+		set msg [hl7 parse [join {
+				{MSH|^~\&|...}
+				{PID|1||||^TEST}
+			} "\r"]]
+
+		hl7 insert_before $msg "PID.0" TST
+	} -returnCodes error -result  "ERROR: hl7 insert should not be run on fields."
+
+	test_hl7 insert_before-1.0 {Test inserting before a repetition} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||TST~ABC||^TEST}
+		} hl7 insert_before "PID.3.0" TST
+
+	test_hl7 insert_before-1.0 {Test inserting before a component} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TST^TEST}
+		} hl7 insert_before "PID.5.0.1" TST
+
+	test_hl7 insert_before-1.0 {Test inserting before a subcomponent} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||TST&ABC||^TEST}
+		} hl7 insert_before "PID.3.0.0.0" TST
+
+
+
+
+
+
+	test_hl7 insert_after-1.0 {Test inserting after a segment} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+			{TST}
+		} hl7 insert_after "PID" TST
+
+	tcltest::test insert_after-1.0 {Test inserting after a field errors out} -body {
+		set msg [hl7 parse [join {
+				{MSH|^~\&|...}
+				{PID|1||||^TEST}
+			} "\r"]]
+
+		hl7 insert_after $msg "PID.0" TST
+	} -returnCodes error -result  "ERROR: hl7 insert should not be run on fields."
+
+	test_hl7 insert_after-1.0 {Test inserting after a repetition} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||ABC~TST||^TEST}
+		} hl7 insert_after "PID.3.0" TST
+
+	test_hl7 insert_after-1.0 {Test inserting after a component} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST^TST}
+		} hl7 insert_after "PID.5.0.1" TST
+
+	test_hl7 insert_after-1.0 {Test inserting after a subcomponent} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||ABC&TST||^TEST}
+		} hl7 insert_after "PID.3.0.0.0" TST
+
+
+
+
+
+	tcltest::test each-1.0 {Test each with values and addresses} -body {
+		set values {}
+		set addresses {}
+
+		set msg [hl7 parse [join {
+			{MSH|^~\&|...}
+			{PID|1||ABC~TST~HEY||^TEST}
+		} "\r"]]
+
+		hl7 each {v a} $msg "PID.3.*.0.0" {
+			lappend values $v
+			lappend addresses $a
+		}
+
+		return [list $values $addresses]
+	} -result {{ABC TST HEY} {1.3.0.0.0 1.3.1.0.0 1.3.2.0.0}}
+
+	tcltest::test each-1.0 {Test each with just values} -body {
+		set values {}
+
+		set msg [hl7 parse [join {
+			{MSH|^~\&|...}
+			{PID|1||ABC~TST~HEY||^TEST}
+		} "\r"]]
+
+		hl7 each {v} $msg "PID.3.*.0.0" {
+			lappend values $v
+		}
+
+		return $values
+	} -result {ABC TST HEY}
+
+
+
+
+
+
+
+
+	tcltest::test get-1.0 {Test get with expand} -body { return "ADD TEST" } -result {}
+
 }

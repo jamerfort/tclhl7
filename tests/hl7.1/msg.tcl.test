@@ -3,7 +3,7 @@
 package require tcltest
 
 source tests/customMatchers.tcl
-source hl7.1/example_msg.tcl
+source hl7.1/example.tcl
 source hl7.1/hl7.tcl
 
 namespace eval HL7 {

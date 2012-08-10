@@ -3,6 +3,11 @@
 #export SHOW_QUERY_RESULTS=1
 export SHOW_QUERY_RESULTS=0
 
+if [ "$1" = "-v" ]
+then
+	export SHOW_QUERY_RESULTS=1
+fi
+
 # build first
 ./build.sh
 
