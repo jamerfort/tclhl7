@@ -280,7 +280,7 @@ namespace eval Query {
 				# split the query
 				foreach query [split $seg_query ","] {
 					# check on segment type and index
-					if { $seg_type == $query || $index == $query || $query == "*" } {
+					if { [string match $query $seg_type] || $index == $query } {
 						return 1
 					}
 				}

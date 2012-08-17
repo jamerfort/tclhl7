@@ -87,6 +87,7 @@
 # 1. segment type: `MSH`, `PID`, etc.
 # 2. single index: For example, MSH segments would correspond to index `0`.
 # 3. `*`: all segments
+# 4. any glob pattern that works with TCL's `string match` command: For example `Z*`.
 # 
 # The field, repetition, component, and subcomponent address parts match in the following ways:
 # 
@@ -979,7 +980,7 @@ namespace eval HL7 {
 					# split the query
 					foreach query [split $seg_query ","] {
 						# check on segment type and index
-						if { $seg_type == $query || $index == $query || $query == "*" } {
+						if { [string match $query $seg_type] || $index == $query } {
 							return 1
 						}
 					}

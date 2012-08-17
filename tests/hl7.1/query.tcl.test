@@ -59,6 +59,7 @@ namespace eval HL7 {
 
 	testquery query-1.0 {Test that queries on segment type} $testmsg "PID" {1 3}
 	testquery query-1.0 {Test that queries on segment index} $testmsg "2" {2}
+	testquery query-1.0 {Test that queries on glob patterns} $testmsg "P*" {1 3}
 	testquery query-1.0 {Test that queries on both segment type and index} $testmsg "MSH,2" {0 2}
 
 	testquery query-1.0 {Test field queries} $testmsg "PID.3" {1.3 3.3}

@@ -81,6 +81,7 @@ The segment address part can match in the following ways:
 1. segment type: `MSH`, `PID`, etc.
 2. single index: For example, MSH segments would correspond to index `0`.
 3. `*`: all segments
+4. any glob pattern that works with TCL's `string match` command: For example `Z*`.
 
 The field, repetition, component, and subcomponent address parts match in the following ways:
 
