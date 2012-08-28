@@ -232,6 +232,17 @@ namespace eval HL7 {
 			{PID|1||ABC||^TEST}
 		} hl7 insert "PID" TST
 
+	test_hl7 insert-1.0 {Test inserting multiple segments} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{TST}
+			{TST2}
+			{TST3}
+			{PID|1||ABC||^TEST}
+		} hl7 insert "PID" TST TST2 TST3
+
 	tcltest::test insert-1.0 {Test inserting a field errors out} -body {
 		set msg [hl7 parse [join {
 				{MSH|^~\&|...}
@@ -249,6 +260,14 @@ namespace eval HL7 {
 			{PID|1||TST~ABC||^TEST}
 		} hl7 insert "PID.3.0" TST
 
+	test_hl7 insert-1.0 {Test inserting multiple repetitions} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||TST~TST2~TST3~ABC||^TEST}
+		} hl7 insert "PID.3.0" TST TST2 TST3
+
 	test_hl7 insert-1.0 {Test inserting a component} {
 			{MSH|^~\&|...}
 			{PID|1||ABC||^TEST}
@@ -257,6 +276,14 @@ namespace eval HL7 {
 			{PID|1||ABC||^TST^TEST}
 		} hl7 insert "PID.5.0.1" TST
 
+	test_hl7 insert-1.0 {Test inserting multiple components} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TST^TST2^TST3^TEST}
+		} hl7 insert "PID.5.0.1" TST TST2 TST3
+
 	test_hl7 insert-1.0 {Test inserting a subcomponent} {
 			{MSH|^~\&|...}
 			{PID|1||ABC||^TEST}
@@ -264,6 +291,14 @@ namespace eval HL7 {
 			{MSH|^~\&|...}
 			{PID|1||TST&ABC||^TEST}
 		} hl7 insert "PID.3.0.0.0" TST
+
+	test_hl7 insert-1.0 {Test inserting multiple subcomponents} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||TST&TST2&TST3&ABC||^TEST}
+		} hl7 insert "PID.3.0.0.0" TST TST2 TST3
 
 
 
@@ -278,6 +313,17 @@ namespace eval HL7 {
 			{TST}
 			{PID|1||ABC||^TEST}
 		} hl7 insert_before "PID" TST
+
+	test_hl7 insert_before-1.0 {Test inserting multiple values before a segment} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{TST}
+			{TST2}
+			{TST3}
+			{PID|1||ABC||^TEST}
+		} hl7 insert_before "PID" TST TST2 TST3
 
 	tcltest::test insert_before-1.0 {Test inserting before a field errors out} -body {
 		set msg [hl7 parse [join {
@@ -296,6 +342,14 @@ namespace eval HL7 {
 			{PID|1||TST~ABC||^TEST}
 		} hl7 insert_before "PID.3.0" TST
 
+	test_hl7 insert_before-1.0 {Test inserting multiple values before a repetition} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||TST~TST2~TST3~ABC||^TEST}
+		} hl7 insert_before "PID.3.0" TST TST2 TST3
+
 	test_hl7 insert_before-1.0 {Test inserting before a component} {
 			{MSH|^~\&|...}
 			{PID|1||ABC||^TEST}
@@ -304,6 +358,14 @@ namespace eval HL7 {
 			{PID|1||ABC||^TST^TEST}
 		} hl7 insert_before "PID.5.0.1" TST
 
+	test_hl7 insert_before-1.0 {Test inserting multiple values before a component} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TST^TST2^TST3^TEST}
+		} hl7 insert_before "PID.5.0.1" TST TST2 TST3
+
 	test_hl7 insert_before-1.0 {Test inserting before a subcomponent} {
 			{MSH|^~\&|...}
 			{PID|1||ABC||^TEST}
@@ -311,6 +373,14 @@ namespace eval HL7 {
 			{MSH|^~\&|...}
 			{PID|1||TST&ABC||^TEST}
 		} hl7 insert_before "PID.3.0.0.0" TST
+
+	test_hl7 insert_before-1.0 {Test inserting multiple values before a subcomponent} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||TST&TST2&TST3&ABC||^TEST}
+		} hl7 insert_before "PID.3.0.0.0" TST TST2 TST3
 
 
 
@@ -325,6 +395,17 @@ namespace eval HL7 {
 			{PID|1||ABC||^TEST}
 			{TST}
 		} hl7 insert_after "PID" TST
+
+	test_hl7 insert_after-1.0 {Test inserting multiple values after a segment} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+			{TST}
+			{TST2}
+			{TST3}
+		} hl7 insert_after "PID" TST TST2 TST3
 
 	tcltest::test insert_after-1.0 {Test inserting after a field errors out} -body {
 		set msg [hl7 parse [join {
@@ -343,6 +424,14 @@ namespace eval HL7 {
 			{PID|1||ABC~TST||^TEST}
 		} hl7 insert_after "PID.3.0" TST
 
+	test_hl7 insert_after-1.0 {Test inserting multiple values after a repetition} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||ABC~TST~TST2~TST3||^TEST}
+		} hl7 insert_after "PID.3.0" TST TST2 TST3
+
 	test_hl7 insert_after-1.0 {Test inserting after a component} {
 			{MSH|^~\&|...}
 			{PID|1||ABC||^TEST}
@@ -351,6 +440,14 @@ namespace eval HL7 {
 			{PID|1||ABC||^TEST^TST}
 		} hl7 insert_after "PID.5.0.1" TST
 
+	test_hl7 insert_after-1.0 {Test inserting multiple values after a component} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST^TST^TST2^TST3}
+		} hl7 insert_after "PID.5.0.1" TST TST2 TST3
+
 	test_hl7 insert_after-1.0 {Test inserting after a subcomponent} {
 			{MSH|^~\&|...}
 			{PID|1||ABC||^TEST}
@@ -358,6 +455,14 @@ namespace eval HL7 {
 			{MSH|^~\&|...}
 			{PID|1||ABC&TST||^TEST}
 		} hl7 insert_after "PID.3.0.0.0" TST
+
+	test_hl7 insert_after-1.0 {Test inserting multiple values after a subcomponent} {
+			{MSH|^~\&|...}
+			{PID|1||ABC||^TEST}
+		} {
+			{MSH|^~\&|...}
+			{PID|1||ABC&TST&TST2&TST3||^TEST}
+		} hl7 insert_after "PID.3.0.0.0" TST TST2 TST3
 
 
 

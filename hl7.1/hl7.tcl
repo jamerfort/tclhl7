@@ -367,15 +367,15 @@
 # 
 # ### `insert`
 # 
-# This proc inserts the given value either at the address indicated in the query or after the address.  All items at the inserted index (and after) are shifted.
+# This proc inserts the given value(s) either at the address indicated in the query or after the address.  All items at the inserted index (and after) are shifted.
 # 
 # Usage:
 # 
 # There are three forms of the `insert` command, two of which perform the same operation:
 # 
-# 1. `insert <msg> <query> <value>`: This form inserts the value at the address indicated by `query`.
-# 2. `insert before <msg> <query> <value>`: This form acts just like the first form.
-# 3. `insert after <msg> <query> <value>`: This form inserts the value after the address indicated by `query`.
+# 1. `insert <msg> <query> <value1> [<value2> ... <valueN>]`: This form inserts the value at the address indicated by `query`.
+# 2. `insert before <msg> <query> <value> [<value2> ... <valueN>]`: This form acts just like the first form.
+# 3. `insert after <msg> <query> <value> [<value2> ... <valueN>]`: This form inserts the value after the address indicated by `query`.
 # 
 # Example Usage:
 # 	
@@ -387,6 +387,10 @@
 # 
 # 	# insert the id as the second repetition in PID.3
 # 	set msg [hl7 insert after $msg PID.3.0 $id]
+# 
+# 	# insert three ids (each as a separate repetition)
+# 	# to the front of PID.3
+# 	set msg [hl7 insert $msg PID.3.0 $id1 $id2 $id3]
 # 
 # ### `each`
 # 
@@ -1149,7 +1153,7 @@ namespace eval HL7 {
 				return $msg
 			}
 	
-			proc insert_with_offset {msg query value {offset 0}} {
+			proc insert_with_offset {msg query values {offset 0}} {
 				# get the depth of the query
 				set query_depth [llength [split $query "."]]
 	
@@ -1171,23 +1175,26 @@ namespace eval HL7 {
 						set parent [lexpand $parent [expr {$index - 1}]]
 					}
 	
-					set parent [linsert $parent $index $value]
+					set parent [eval {linsert $parent $index} $values]
 					set msg [_set $msg $parent_address $parent]
 				}
 	
 				return $msg
 			}
 	
-			proc insert {msg query value} {
-				return [insert_with_offset $msg $query $value 0]
+			proc insert {msg query value args} {
+				set values [concat [list $value] $args]
+				return [insert_with_offset $msg $query $values 0]
 			}
 	
-			proc insert_before {msg query value} {
-				return [insert_with_offset $msg $query $value 0]
+			proc insert_before {msg query value args} {
+				set values [concat [list $value] $args]
+				return [insert_with_offset $msg $query $values 0]
 			}
 	
-			proc insert_after {msg query value} {
-				return [insert_with_offset $msg $query $value 1]
+			proc insert_after {msg query value args} {
+				set values [concat [list $value] $args]
+				return [insert_with_offset $msg $query $values 1]
 			}
 	
 			proc each {vars msg query args} {

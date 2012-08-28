@@ -361,15 +361,15 @@ Example Usage:
 
 ### `insert`
 
-This proc inserts the given value either at the address indicated in the query or after the address.  All items at the inserted index (and after) are shifted.
+This proc inserts the given value(s) either at the address indicated in the query or after the address.  All items at the inserted index (and after) are shifted.
 
 Usage:
 
 There are three forms of the `insert` command, two of which perform the same operation:
 
-1. `insert <msg> <query> <value>`: This form inserts the value at the address indicated by `query`.
-2. `insert before <msg> <query> <value>`: This form acts just like the first form.
-3. `insert after <msg> <query> <value>`: This form inserts the value after the address indicated by `query`.
+1. `insert <msg> <query> <value1> [<value2> ... <valueN>]`: This form inserts the value at the address indicated by `query`.
+2. `insert before <msg> <query> <value> [<value2> ... <valueN>]`: This form acts just like the first form.
+3. `insert after <msg> <query> <value> [<value2> ... <valueN>]`: This form inserts the value after the address indicated by `query`.
 
 Example Usage:
 	
@@ -381,6 +381,10 @@ Example Usage:
 
 	# insert the id as the second repetition in PID.3
 	set msg [hl7 insert after $msg PID.3.0 $id]
+
+	# insert three ids (each as a separate repetition)
+	# to the front of PID.3
+	set msg [hl7 insert $msg PID.3.0 $id1 $id2 $id3]
 
 ### `each`
 

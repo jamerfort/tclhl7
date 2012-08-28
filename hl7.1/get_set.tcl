@@ -139,7 +139,7 @@ namespace eval GetSet {
 			return $msg
 		}
 
-		proc insert_with_offset {msg query value {offset 0}} {
+		proc insert_with_offset {msg query values {offset 0}} {
 			# get the depth of the query
 			set query_depth [llength [split $query "."]]
 
@@ -161,23 +161,26 @@ namespace eval GetSet {
 					set parent [lexpand $parent [expr {$index - 1}]]
 				}
 
-				set parent [linsert $parent $index $value]
+				set parent [eval {linsert $parent $index} $values]
 				set msg [_set $msg $parent_address $parent]
 			}
 
 			return $msg
 		}
 
-		proc insert {msg query value} {
-			return [insert_with_offset $msg $query $value 0]
+		proc insert {msg query value args} {
+			set values [concat [list $value] $args]
+			return [insert_with_offset $msg $query $values 0]
 		}
 
-		proc insert_before {msg query value} {
-			return [insert_with_offset $msg $query $value 0]
+		proc insert_before {msg query value args} {
+			set values [concat [list $value] $args]
+			return [insert_with_offset $msg $query $values 0]
 		}
 
-		proc insert_after {msg query value} {
-			return [insert_with_offset $msg $query $value 1]
+		proc insert_after {msg query value args} {
+			set values [concat [list $value] $args]
+			return [insert_with_offset $msg $query $values 1]
 		}
 
 		proc each {vars msg query args} {
