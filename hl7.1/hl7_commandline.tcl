@@ -375,9 +375,9 @@
 # 
 # There are three forms of the `insert` command, two of which perform the same operation:
 # 
-# 1. `insert <msg> <query> <value1> [<value2> ... <valueN>]`: This form inserts the value at the address indicated by `query`.
+# 1. `insert <msg> <query> <value1> [<value2> ... <valueN>]`: This form inserts the value(s) at the address indicated by `query`.
 # 2. `insert before <msg> <query> <value> [<value2> ... <valueN>]`: This form acts just like the first form.
-# 3. `insert after <msg> <query> <value> [<value2> ... <valueN>]`: This form inserts the value after the address indicated by `query`.
+# 3. `insert after <msg> <query> <value> [<value2> ... <valueN>]`: This form inserts the value(s) after the address indicated by `query`.
 # 
 # Example Usage:
 # 	
